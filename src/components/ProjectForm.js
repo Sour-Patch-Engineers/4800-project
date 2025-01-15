@@ -21,20 +21,31 @@ function ProjectForm({ addProject }) {
     // Submit the form and send data to the server
     const handleSubmit = async () => {
         if (newProject.name && newProject.status && newProject.dueDate) {
+            const token = localStorage.getItem('token'); // Retrieve token
+    
             try {
-                const response = await axios.post('http://localhost:5000/projects', newProject);
+                console.log('Submitting Project Data:', newProject);
+                const response = await axios.post(
+                    'http://localhost:5000/projects',
+                    newProject,
+                    {
+                        headers: { Authorization: token },
+                    }
+                );
+                console.log('Server Response:', response.data);
                 alert(response.data.message);
-                addProject(newProject);  // Adding to the frontend state
-                setShowForm(false);      // Hide the form
+                addProject({ ...newProject, id: response.data.projectId }); // Add project with ID
+                setShowForm(false);
                 setNewProject({ name: '', description: '', status: '', dueDate: '', collaborators: '' });
             } catch (error) {
-                console.error('Error adding project:', error);
+                console.error('Error adding project:', error.response?.data || error.message);
                 alert('Failed to add project');
             }
         } else {
             alert('Please fill in all required fields!');
         }
     };
+    
 
     return (
         <div className="mt-6">

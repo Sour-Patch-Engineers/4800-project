@@ -10,17 +10,27 @@ function ProjectDetails() {
     const [formData, setFormData] = useState({});
 
     useEffect(() => {
+        console.log("Project ID being fetched:", projectId); // Debugging the value
+
         axios.get(`http://localhost:5000/projects/${projectId}`)
             .then((response) => {
-                const projectData = response.data;
-                if (projectData.dueDate) {
-                    projectData.dueDate = new Date(projectData.dueDate).toISOString().split('T')[0];
+                if (response.data && Object.keys(response.data).length > 0) {
+                    const projectData = response.data;
+                    if (projectData.dueDate) {
+                        projectData.dueDate = new Date(projectData.dueDate).toISOString().split('T')[0];
+                    }
+                    setProject(projectData); 
+                    setFormData(projectData);
+                } else {
+                    alert('Project not found!');
                 }
-                setProject(response.data);
-                setFormData(response.data);
             })
-            .catch((error) => console.error('Error fetching project details:', error));
-    }, [projectId]);
+            .catch((error) => {
+                console.error('Error fetching project details:', error.response?.data || error.message);
+                alert('Failed to fetch project details.');
+            });
+    }, [projectId]);  // Corrected the dependency here from projected to projectId
+    
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
