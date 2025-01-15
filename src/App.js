@@ -1,58 +1,87 @@
+// src/App.js
 import React, { useState, useEffect } from 'react';
-import TaskForm from './components/TaskForm';
-import TaskList from './components/TaskList';
+import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
+import TaskManagerPage from './components/TaskManagerPage';
+import ProjectForm from './components/ProjectForm';
+import ProjectDetails from './components/ProjectDetails';
 import axios from 'axios';
+import './index.css';
 
 function App() {
-  const [tasks, setTasks] = useState([]);
-  const [editingTask, setEditingTask] = useState(null);
+    const [projects, setProjects] = useState([]);
 
-  useEffect(() => {
-    axios.get('http://localhost:5000/tasks')
-      .then((response) => setTasks(response.data))
-      .catch((error) => console.error('Error fetching tasks:', error));
-  }, []);
+    // Fetch projects from the database on component mount
+    useEffect(() => {
+        axios.get('http://localhost:5000/projects')
+            .then((response) => {
+                setProjects(response.data);
+            })
+            .catch((error) => {
+                console.error('Error fetching projects:', error);
+            });
+    }, []);
 
-  const addTask = (task) => {
-    if (editingTask) {
-      axios.put(`http://localhost:5000/tasks/${editingTask.taskId}`, task)
-        .then(() => {
-          setTasks((prev) => prev.map((t) => (t.taskId === editingTask.taskId ? task : t)));
-          setEditingTask(null);
-        })
-        .catch(() => alert('Error updating task'));
-    } else {
-      axios.post('http://localhost:5000/tasks', task)
-        .then((response) => setTasks([...tasks, { ...task, taskId: response.data.taskId }]))
-        .catch(() => alert('Error adding task'));
-    }
-  };
+    // Function to add a project (passed to ProjectForm)
+    const addProject = (newProject) => {
+        setProjects((prev) => [...prev, newProject]);
+    };
 
-  const deleteTask = (id) => {
-    axios.delete(`http://localhost:5000/tasks/${id}`)
-      .then(() => setTasks((prev) => prev.filter((task) => task.taskId !== id)))
-      .catch(() => alert('Error deleting task'));
-  };
+    return (
+        <Router>
+            <div className="flex h-screen">
+                {/* Sidebar */}
+                <div className="w-64 bg-gray-800 text-white p-6 space-y-6">
+                    <h1 className="text-2xl font-bold">Navigate</h1>
+                    <nav className="space-y-4">
+                        <Link to="/" className="block hover:text-blue-400">Home</Link>
+                        <Link to="/profile" className="block hover:text-blue-400">My Profile</Link>
+                    </nav>
+                </div>
 
-  const toggleTask = (id) => {
-    const task = tasks.find((t) => t.taskId === id);
-    axios.put(`http://localhost:5000/tasks/${id}`, { ...task, completed: !task.completed })
-      .then(() => setTasks((prev) => prev.map((t) => (t.taskId === id ? { ...t, completed: !t.completed } : t))))
-      .catch(() => alert('Error toggling task'));
-  };
+                {/* Main Content Section */}
+                <div className="flex-1 p-6">
+                    <Routes>
+                        {/* Home Page with Project List and Forms */}
+                        <Route path="/" element={
+                            <div>
+                                <h1 className="text-3xl font-bold mb-6">Projects</h1>
+                                {/* Display the projects fetched from the database */}
+                                {projects.length > 0 ? (
+                                    projects.map((project) => (
+                                        <div key={project.projectId} className="mb-4 p-4 border rounded">
+                                            <h2 className="text-xl font-semibold">{project.name}</h2>
+                                            
+                                            {/* View Details Button */}
+                                            <Link to={`/project-details/${project.projectId}`} 
+                                                  className="text-blue-500 underline mr-4">
+                                                View Details
+                                            </Link>
 
-  const editTask = (id) => {
-    const taskToEdit = tasks.find((task) => task.taskId === id);
-    setEditingTask(taskToEdit);
-  };
+                                            {/* Manage Tasks Button */}
+                                            <Link to={`/task-manager/${project.projectId}`} 
+                                                  className="text-blue-500 underline">
+                                                Manage Tasks
+                                            </Link>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <p>No projects found. Create a new one below!</p>
+                                )}
+                                {/* Project Form Component */}
+                                <ProjectForm addProject={addProject} />
+                            </div>
+                        } />
 
-  return (
-    <div className="container mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-6">Task Manager</h1>
-      <TaskForm onAddTask={addTask} editingTask={editingTask} />
-      <TaskList tasks={tasks} onToggle={toggleTask} onEdit={editTask} onDelete={deleteTask} />
-    </div>
-  );
+                        {/* Project Details Page */}
+                        <Route path="/project-details/:projectId" element={<ProjectDetails />} />
+
+                        {/* Task Manager Page */}
+                        <Route path="/task-manager/:projectId" element={<TaskManagerPage />} />
+                    </Routes>
+                </div>
+            </div>
+        </Router>
+    );
 }
 
 export default App;
