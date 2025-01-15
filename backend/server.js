@@ -14,11 +14,11 @@ app.use(bodyParser.json());
 
 // MySQL connection
 const db = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "11111Sour#",
-  database: "task_manager_db",
-  connectLimit: 10
+  host: process.env.DB_HOST,
+  port: process.env.DB_PORT, 
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME
 });
 
 db.connect((err) => {
@@ -83,3 +83,70 @@ app.put('/tasks/:id', (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
+
+// Route to add a new project
+app.post('/projects', (req, res) => {
+  const { name, description, status, dueDate, collaborators } = req.body;
+  const sql = 'INSERT INTO Projects (name, description, status, dueDate, collaborators) VALUES (?, ?, ?, ?, ?)';
+  db.query(sql, [name, description, status, dueDate, collaborators], (err, result) => {
+      if (err) {
+          console.error('Error adding project:', err);
+          return res.status(500).json({ error: 'Failed to add project' });
+      }
+      res.json({ message: 'Project added successfully', projectId: result.insertId });
+  });
+});
+
+// Route to fetch all projects from the database
+app.get('/projects', (req, res) => {
+  const sql = 'SELECT * FROM Projects';
+  db.query(sql, (err, result) => {
+      if (err) {
+          console.error('Error fetching projects:', err);
+          return res.status(500).json({ error: 'Failed to fetch projects' });
+      }
+      res.json(result);
+  });
+});
+
+// Route to fetch project details by ID
+app.get('/projects/:projectId', (req, res) => {
+  const { projectId } = req.params;
+  const sql = 'SELECT * FROM Projects WHERE projectId = ?';
+  db.query(sql, [projectId], (err, result) => {
+      if (err) {
+          console.error('Error fetching project details:', err);
+          return res.status(500).json({ error: 'Database error occurred' });
+      }
+      if (result.length === 0) {
+          return res.status(404).json({ error: 'Project not found' });
+      }
+      res.json(result[0]); // Return the project data
+  });
+});
+
+app.put('/projects/:projectId', (req, res) => {
+  const { projectId } = req.params;
+  let { name, description, status, dueDate, collaborators } = req.body;
+
+  // Convert the date to MySQL compatible format (YYYY-MM-DD)
+  if (dueDate) {
+    const formattedDate = new Date(dueDate).toISOString().split('T')[0]; 
+    dueDate = formattedDate;
+  }
+
+  const sql = `
+      UPDATE Projects 
+      SET name = ?, description = ?, status = ?, dueDate = ?, collaborators = ? 
+      WHERE projectId = ?
+  `;
+
+  db.query(sql, [name, description, status, dueDate, collaborators, projectId], (err, result) => {
+      if (err) {
+          console.error('Error updating project:', err);
+          return res.status(500).json({ error: 'Failed to update project' });
+      }
+      res.json({ message: 'Project updated successfully' });
+  });
+});
+
