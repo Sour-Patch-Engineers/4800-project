@@ -32,7 +32,7 @@ function TaskManagerPage() {
                 setTasks((prev) => prev.map((t) => (t.taskId === editingTask.taskId ? task : t)));
                 setEditingTask(null);
             } else {
-                const response = await axios.post('http://localhost:5000/tasks', task);
+                const response = await axios.post('http://localhost:5000/tasks', task, projectId);
                 setTasks((prev) => [...prev, { ...task, taskId: response.data.taskId }]);
             }
         } catch (error) {
@@ -68,7 +68,7 @@ function TaskManagerPage() {
         <div className="container mx-auto p-6">
             <Link to="/" className="text-blue-500 underline mb-4 block">Back to Projects</Link>
             <h1 className="text-3xl font-bold mb-6">Task Manager for Project {projectId}</h1>
-            <TaskForm onAddTask={addTask} editingTask={editingTask} />
+            <TaskForm onAddTask={addTask} editingTask={editingTask} projectId={projectId} />
             <TaskList tasks={tasks} onToggle={toggleTask} onEdit={editTask} onDelete={deleteTask} />
         </div>
     );

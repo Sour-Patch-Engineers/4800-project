@@ -110,16 +110,17 @@ app.get('/tasks', (req, res) => {
 
 // Route to add a task
 app.post('/tasks', (req, res) => {
-  const { title, description, dueDate, assignedTo, reminderDate } = req.body;
-  const sql = 'INSERT INTO Tasks (title, description, dueDate, assignedTo, reminderDate) VALUES (?, ?, ?, ?, ?)';
-  db.query(sql, [title, description, dueDate, assignedTo, reminderDate], (err, result) => {
-    if (err) {
-      console.error('Error adding task:', err);
-      return res.status(500).json({ error: 'Failed to add task' });
-    }
-    res.json({ message: 'Task added', taskId: result.insertId });
+  const { title, description, dueDate, assignedTo, reminderDate, projectId } = req.body;
+  const sql = 'INSERT INTO Tasks (title, description, dueDate, assignedTo, reminderDate, projectId) VALUES (?, ?, ?, ?, ?, ?)';
+  db.query(sql, [title, description, dueDate, assignedTo, reminderDate, projectId], (err, result) => {
+      if (err) {
+          console.error('Error adding task:', err);
+          return res.status(500).json({ error: 'Failed to add task' });
+      }
+      res.json({ message: 'Task added', taskId: result.insertId });
   });
 });
+
 
 // Route to delete a task by ID
 app.delete('/tasks/:id', (req, res) => {
@@ -243,6 +244,19 @@ app.get('/projects/:projectId', (req, res) => {
       res.json(result[0]); // Return the project data
   });
 });
+
+app.get('/projects/:projectId/tasks', (req, res) => {
+  const { projectId } = req.params;
+  const sql = 'SELECT * FROM Tasks WHERE projectId = ?';
+  db.query(sql, [projectId], (err, results) => {
+      if (err) {
+          console.error('Error fetching tasks:', err);
+          return res.status(500).json({ error: 'Failed to retrieve tasks' });
+      }
+      res.json(results);
+  });
+});
+
 
 app.put('/projects/:projectId', (req, res) => {
   const { projectId } = req.params;

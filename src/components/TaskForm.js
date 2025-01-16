@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-function TaskForm({ onAddTask, editingTask }) {
+function TaskForm({ onAddTask, editingTask, projectId}) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [dueDate, setDueDate] = useState('');
@@ -18,16 +18,17 @@ function TaskForm({ onAddTask, editingTask }) {
   }, [editingTask]);
 
   const handleSubmit = (e) => {
-    e.preventDefault();
-    if (title && description && dueDate) {
-      onAddTask({ title, description, dueDate, assignedTo, reminderDate });
-      setTitle('');
-      setDescription('');
-      setDueDate('');
-      setAssignedTo('');
-      setReminderDate('');
-    }
-  };
+        e.preventDefault();
+        if (title && description && dueDate) {
+            onAddTask({ title, description, dueDate, assignedTo, reminderDate, projectId }); // Include projectId
+            setTitle('');
+            setDescription('');
+            setDueDate('');
+            setAssignedTo('');
+            setReminderDate('');
+        }
+    };
+
 
   return (
     <form onSubmit={handleSubmit} className="mt-6 space-y-4">
